@@ -27,19 +27,19 @@ interface PaymasterProps {
 **Usage**
 
 ```
-import { paymasterExecute } from "@thangnn91/paymaster-helper"
+import { paymaster } from "@thangnn91/paymaster-helper"
 
 const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
 
 const populateContract = await contract.populateTransaction[method](...params, {
       from: ACCOUNT,
 });
-
-await paymasterExecute({
+const partnerCode = ethers.utils.formatBytes32String('');
+await paymaster.paymasterExecute({
   network: "testnet",
   pk: PRIVATE_KEY,
   paymentToken: PAYMENT_TOKEN,
-  partnerCode: BYTES_32,
+  partnerCode: partnerCode,
   populateTransaction: populateContract
 })
 ```
