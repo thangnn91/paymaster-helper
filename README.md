@@ -7,37 +7,51 @@ A paymaster is a smart contract that can pay for transactions for its users, exe
 Using npm package manager
 
 ```
-npm i @thangnn91/paymaster-helper
+npm i @holdstation/paymaster-helper
 
 ```
 
 **Props**
 
 ```
-interface PaymasterProps {
-    network: 'testnet' | 'mainnet';//network provider
-    pk: string; //the private key interacting to contract
-    paymasterAddress?: string; //custom paymaster address
-    paymentToken: string;//erc20 token to pay gas
-    partnerCode: string; //Partner code used for reference
-    populateTransaction: ethers.PopulatedTransaction;//populated transaction
+
+interface BaseProps {
+  network: "testnet" | "mainnet"; //network provider
+  signer: string | Wallet; //the private key or signed wallet interacting to contract
+  paymasterAddress?: string; //custom paymaster address
+  populateTransaction: ethers.PopulatedTransaction; //populated transaction
 }
+export interface PaymasterProps extends BaseProps {
+  partnerCode: string; //Partner code used for reference
+  paymentToken: string; //erc20 token to pay gas
+}
+
 ```
 
 **Usage**
 
 ```
-import { paymaster } from "@thangnn91/paymaster-helper"
+import { paymaster } from "@holdstation/paymaster-helper"
 
 const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider)
-
+const signer = provider.getSigner(account.address);
 const populateContract = await contract.populateTransaction[method](...params, {
       from: ACCOUNT,
 });
 const partnerCode = ethers.utils.formatBytes32String('');
+//execute by signer
 await paymaster.paymasterExecute({
   network: "testnet",
-  pk: PRIVATE_KEY,
+  signer: signer,
+  paymentToken: PAYMENT_TOKEN,
+  partnerCode: partnerCode,
+  populateTransaction: populateContract
+})
+
+//execute using private key
+await paymaster.paymasterExecute({
+  network: "testnet",
+  signer: PRIVATE_KEY,
   paymentToken: PAYMENT_TOKEN,
   partnerCode: partnerCode,
   populateTransaction: populateContract
