@@ -8,13 +8,13 @@ import {
 } from "./config";
 interface BaseProps {
   network: "testnet" | "mainnet";
-  pk: string;
-  paymentToken: string;
+  signer: string | Wallet;
   paymasterAddress?: string;
   populateTransaction: ethers.PopulatedTransaction;
 }
 export interface PaymasterProps extends BaseProps {
   partnerCode: string;
+  paymentToken: string;
 }
 
 export interface PaymasterNftProps extends BaseProps {
@@ -27,7 +27,10 @@ export const paymasterExecute = async (
   const provider = new Provider(
     props.network === "testnet" ? RPC.testnet : RPC.mainnet
   );
-  const signer = new Wallet(props.pk, provider);
+  const signer =
+    typeof props.signer === "string"
+      ? new Wallet(props.signer, provider)
+      : props.signer;
   const paymasterAddress =
     props.paymasterAddress ||
     PAYMASTER_ADDRESS[props.network as keyof typeof PAYMASTER_ADDRESS];
@@ -79,7 +82,10 @@ export const paymasterNftExecute = async (
   const provider = new Provider(
     props.network === "testnet" ? RPC.testnet : RPC.mainnet
   );
-  const signer = new Wallet(props.pk, provider);
+  const signer =
+    typeof props.signer === "string"
+      ? new Wallet(props.signer, provider)
+      : props.signer;
   const paymasterAddress =
     props.paymasterAddress ||
     PAYMASTER_ADDRESS[props.network as keyof typeof PAYMASTER_ADDRESS];

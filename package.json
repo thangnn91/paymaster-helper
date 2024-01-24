@@ -1,9 +1,9 @@
 {
-  "name": "@thangnn91/paymaster-helper",
+  "name": "@holdstation/paymaster-helper",
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.0.11",
+  "version": "1.0.0",
   "description": "Paymaster helper",
   "scripts": {
     "build": "tsc"
@@ -11,10 +11,7 @@
   "author": "thangnn91",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.11.5",
-    "ethers": "^5.7.2",
-    "typescript": "^4.7.4",
-    "zksync-web3": "^0.14.3"
+    "@types/node": "^20.11.5"
   },
   "repository": {
     "type": "git",
@@ -30,6 +27,9 @@
   ],
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@types/estree": "^1.0.5"
+    "@types/estree": "^1.0.5",
+    "ethers": "^5.7.2",
+    "typescript": "^4.7.4",
+    "zksync-web3": "^0.14.3"
   }
 }
