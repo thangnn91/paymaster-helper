@@ -25,3 +25,15 @@ export type BuilderOutput = {
   gasLimit: BigNumber;
   gasPrice: BigNumber;
 };
+
+export type UserNftOutput = [
+  nftType: BigNumber,
+  balance: BigNumber,
+  uri: string,
+  maxSponsor: BigNumber
+] & {
+  nftType: BigNumber;
+  balance: BigNumber;
+  uri: string;
+  maxSponsor: BigNumber;
+};

@@ -8,7 +8,7 @@ import {
   PAYMASTER_NFT_ADDRESS,
   PAYMASTER_NFT_CONTRACT_ABI,
 } from "./config";
-import { BaseProps, BuilderOutput } from "./types";
+import { BaseProps, BuilderOutput, UserNftOutput } from "./types";
 import { assert } from "./utils";
 export async function buildErc20PaymentParams(
   props: BaseProps,
@@ -205,4 +205,22 @@ export async function getErc20MustBePaid(
     ethFee
   );
   return BigNumber.from(minAmount);
+}
+
+export async function getAllNfts(
+  network: "mainnet" | "testnet",
+  provider: Provider,
+  user: string
+): Promise<UserNftOutput[]> {
+  const paymasterAddress =
+    PAYMASTER_NFT_ADDRESS[network as keyof typeof PAYMASTER_NFT_ADDRESS];
+  const paymasterContract = new Contract(
+    paymasterAddress,
+    PAYMASTER_NFT_CONTRACT_ABI,
+    provider
+  );
+  const nftContractAddress = await paymasterContract.nftAsset();
+  const nftContract = new Contract(nftContractAddress, NFT_ABI, provider);
+  const userNfts: UserNftOutput[] = await nftContract.getAllNfts(user);
+  return userNfts;
 }
