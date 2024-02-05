@@ -7,6 +7,7 @@ import {
   PAYMASTER_CONTRACT_ABI,
   PAYMASTER_NFT_ADDRESS,
   PAYMASTER_NFT_CONTRACT_ABI,
+  RPC,
 } from "./config";
 import { BaseProps, BuilderOutput, UserNftOutput } from "./types";
 import { assert } from "./utils";
@@ -17,8 +18,7 @@ export async function buildErc20PaymentParams(
   paymentToken: string
 ): Promise<BuilderOutput> {
   const paymasterAddress =
-    props.paymasterAddress ||
-    PAYMASTER_ADDRESS[props.network as keyof typeof PAYMASTER_ADDRESS];
+    props.paymasterAddress || PAYMASTER_ADDRESS[props.network];
 
   const gasPrice = await provider.getGasPrice();
 
@@ -78,8 +78,7 @@ export async function buildNftPaymentParams(
   paymentToken?: string
 ): Promise<BuilderOutput> {
   const paymasterAddress =
-    props.paymasterAddress ||
-    PAYMASTER_NFT_ADDRESS[props.network as keyof typeof PAYMASTER_NFT_ADDRESS];
+    props.paymasterAddress || PAYMASTER_NFT_ADDRESS[props.network];
   const gasPrice = await provider.getGasPrice();
 
   let innerInput: string | undefined = undefined;
@@ -152,11 +151,10 @@ export async function buildNftPaymentParams(
 
 export async function getMaxSponsorGasByNft(
   network: "mainnet" | "testnet",
-  provider: Provider,
   nftType: 0 | 1 | 2 | 3
 ): Promise<BigNumber> {
-  const paymasterAddress =
-    PAYMASTER_NFT_ADDRESS[network as keyof typeof PAYMASTER_NFT_ADDRESS];
+  const provider = new Provider(RPC[network]);
+  const paymasterAddress = PAYMASTER_NFT_ADDRESS[network];
   const paymasterContract = new Contract(
     paymasterAddress,
     PAYMASTER_NFT_CONTRACT_ABI,
@@ -170,13 +168,12 @@ export async function getMaxSponsorGasByNft(
 
 export async function getErc20MustBePaid(
   props: BaseProps,
-  provider: Provider,
   from: string,
   nftType: 0 | 1 | 2 | 3,
   paymentToken: string
 ): Promise<BigNumber> {
-  const paymasterAddress =
-    PAYMASTER_NFT_ADDRESS[props.network as keyof typeof PAYMASTER_NFT_ADDRESS];
+  const provider = new Provider(RPC[props.network]);
+  const paymasterAddress = PAYMASTER_NFT_ADDRESS[props.network];
   const paymasterContract = new Contract(
     paymasterAddress,
     PAYMASTER_NFT_CONTRACT_ABI,
@@ -209,11 +206,10 @@ export async function getErc20MustBePaid(
 
 export async function getAllNfts(
   network: "mainnet" | "testnet",
-  provider: Provider,
   user: string
 ): Promise<UserNftOutput[]> {
-  const paymasterAddress =
-    PAYMASTER_NFT_ADDRESS[network as keyof typeof PAYMASTER_NFT_ADDRESS];
+  const provider = new Provider(RPC[network]);
+  const paymasterAddress = PAYMASTER_NFT_ADDRESS[network];
   const paymasterContract = new Contract(
     paymasterAddress,
     PAYMASTER_NFT_CONTRACT_ABI,

@@ -10,9 +10,7 @@ export const paymasterExecute = async (
   if (!props.paymentToken) {
     throw new Error("Payment token is required");
   }
-  const provider = new Provider(
-    props.network === "testnet" ? RPC.testnet : RPC.mainnet
-  );
+  const provider = new Provider(RPC[props.network]);
   const signer =
     typeof props.signer === "string"
       ? new Wallet(props.signer, provider)
@@ -38,9 +36,7 @@ export const paymasterNftExecute = async (
   if (props.nftType === undefined || props.nftType === null) {
     throw new Error("Nft type is required");
   }
-  const provider = new Provider(
-    props.network === "testnet" ? RPC.testnet : RPC.mainnet
-  );
+  const provider = new Provider(RPC[props.network]);
   const signer =
     typeof props.signer === "string"
       ? new Wallet(props.signer, provider)
