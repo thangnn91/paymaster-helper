@@ -34,7 +34,7 @@ export const paymasterExecute = async (
     ...populatedTx,
     maxFeePerGas: gasPrice,
     maxPriorityFeePerGas: BigNumber.from(0),
-    gasLimit: gasLimit.mul(120).div(100),
+    gasLimit,
   });
 };
 
@@ -50,7 +50,7 @@ export const paymasterNftExecute = async (
   ) {
     throw new Error("Extension not found");
   }
-  if (!props.nftType) {
+  if (props.nftType === undefined || props.nftType === null) {
     throw new Error("Nft type is required");
   }
   const signer: Signer =
@@ -59,12 +59,13 @@ export const paymasterNftExecute = async (
     props,
     signer.provider,
     await signer.getAddress(),
-    props.nftType
+    props.nftType,
+    props.paymentToken
   );
   return await signer.sendTransaction({
     ...populatedTx,
     maxFeePerGas: gasPrice,
     maxPriorityFeePerGas: BigNumber.from(0),
-    gasLimit: gasLimit.mul(120).div(100),
+    gasLimit: gasLimit,
   });
 };

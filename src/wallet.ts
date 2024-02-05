@@ -28,14 +28,14 @@ export const paymasterExecute = async (
     ...populatedTx,
     maxFeePerGas: gasPrice,
     maxPriorityFeePerGas: BigNumber.from(0),
-    gasLimit: gasLimit.mul(120).div(100),
+    gasLimit: gasLimit,
   });
 };
 
 export const paymasterNftExecute = async (
   props: WalletExecuteProps
 ): Promise<types.TransactionResponse> => {
-  if (!props.nftType) {
+  if (props.nftType === undefined || props.nftType === null) {
     throw new Error("Nft type is required");
   }
   const provider = new Provider(
@@ -49,12 +49,13 @@ export const paymasterNftExecute = async (
     props,
     provider,
     signer.address,
-    props.nftType
+    props.nftType,
+    props.paymentToken
   );
   return await signer.sendTransaction({
     ...populatedTx,
     maxFeePerGas: gasPrice,
     maxPriorityFeePerGas: BigNumber.from(0),
-    gasLimit: gasLimit.mul(120).div(100),
+    gasLimit: gasLimit,
   });
 };

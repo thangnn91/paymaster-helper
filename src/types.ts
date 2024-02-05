@@ -5,6 +5,7 @@ export interface BaseProps {
   network: "testnet" | "mainnet";
   paymasterAddress?: string;
   populateTransaction: ethers.PopulatedTransaction;
+  innerInput?: string;
 }
 
 export interface WalletExecuteProps extends BaseProps {

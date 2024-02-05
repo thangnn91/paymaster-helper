@@ -7,4 +7,4 @@ export {
 } from "./types";
 export * as WalletPaymaster from "./wallet";
 export * as SignerPaymaster from "./signer";
-export { buildErc20PaymentParams, buildNftPaymentParams } from "./builders";
+export { getMaxSponsorGasByNft, getErc20MustBePaid } from "./builders";
