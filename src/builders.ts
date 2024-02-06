@@ -1,6 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import { Contract, Provider, utils } from "zksync-web3";
 import {
+  DEFAULT_GAS_BUFFER_PERCENTAGE,
   ERC20_ABI,
   NFT_ABI,
   PAYMASTER_ADDRESS,
@@ -45,7 +46,9 @@ export async function buildErc20PaymentParams(
     from,
   });
 
-  gasLimit = gasLimit.mul(105).div(100);
+  gasLimit = gasLimit
+    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
+    .div(100);
   const ethFee = gasLimit.mul(gasPrice);
   const paymasterContract = new Contract(
     paymasterAddress,
@@ -132,7 +135,9 @@ export async function buildNftPaymentParams(
     from,
   });
 
-  gasLimit = gasLimit.mul(105).div(100);
+  gasLimit = gasLimit
+    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
+    .div(100);
   const ethFee = gasLimit.mul(gasPrice);
   const nftContractAddress = await paymasterContract.nftAsset();
   const nftContract = new Contract(nftContractAddress, NFT_ABI, provider);
@@ -224,7 +229,9 @@ export async function getErc20MustBePaid(
     from,
   });
 
-  gasLimit = gasLimit.mul(105).div(100);
+  gasLimit = gasLimit
+    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
+    .div(100);
   const ethFee = gasLimit.mul(gasPrice);
   const [, minAmount] = await paymasterContract.getTokenFee(
     paymentToken,

@@ -210,3 +210,5 @@ export const ERC20_ABI = [
     type: "function",
   },
 ];
+
+export const DEFAULT_GAS_BUFFER_PERCENTAGE = 25;

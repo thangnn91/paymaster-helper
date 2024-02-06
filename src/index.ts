@@ -5,6 +5,7 @@ export {
   SignerExecuteProps,
   BuilderOutput,
   UserNftOutput,
+  BufferRange,
 } from "./types";
 export * as WalletPaymaster from "./wallet";
 export * as SignerPaymaster from "./signer";
