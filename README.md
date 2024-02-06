@@ -27,29 +27,41 @@ yarn add @holdstation/paymaster-helper
 **Types**
 
 ```
-
 export interface BaseProps {
-  network: "testnet" | "mainnet"; //network
+  network: "testnet" | "mainnet";
   paymasterAddress?: string; //custom paymaster address
-  populateTransaction: ethers.PopulatedTransaction; //populated transaction
+  populateTransaction: ethers.PopulatedTransaction;
+  innerInput?: string; //custom inner input for paymaster
 }
 
 export interface WalletExecuteProps extends BaseProps {
-  signer: string | Wallet; //the private key or signed wallet interacting to contract
-  paymentToken?: string; //erc20 token to pay gas
-  nftType?: 0 | 1 | 2 | 3; //nft type using for sponsoring gas
+  signer: string | Wallet;
+  paymentToken?: string;
+  nftType?: 0 | 1 | 2 | 3;
 }
 
 export interface SignerExecuteProps extends BaseProps {
-  paymentToken?: string; //erc20 token to pay gas
-  nftType?: 0 | 1 | 2 | 3; //nft type using for sponsoring gas
+  signer?: Signer;
+  paymentToken?: string;
+  nftType?: 0 | 1 | 2 | 3;
 }
 
-//output data is used to execute outside
 export type BuilderOutput = {
   populatedTx: ethers.PopulatedTransaction;
   gasLimit: BigNumber;
   gasPrice: BigNumber;
+};
+
+export type UserNftOutput = [
+  nftType: BigNumber,
+  balance: BigNumber,
+  uri: string,
+  maxSponsor: BigNumber
+] & {
+  nftType: BigNumber;
+  balance: BigNumber;
+  uri: string;
+  maxSponsor: BigNumber;
 };
 
 ```
@@ -106,4 +118,23 @@ await SignerPaymaster.paymasterExecute({
   populateTransaction: populateContract
 })
 
+```
+
+Our paymaster has special inner input information that enables us to distinguish our role
+In case you use a custom paymaster address, you can adjust the inner input accordingly to align with your contract.
+
+For example:
+
+```
+const abiCoder = new ethers.utils.AbiCoder();
+const customInnerInput = abiCoder.encode(["bytes32"], [customInnerInputString]);
+await SignerPaymaster.paymasterExecute({
+  //If no signer is specified, we will obtain it from the extension.
+  signer: walletConnectSigner,
+  network: "testnet",
+  paymentToken: PAYMENT_TOKEN,
+  populateTransaction: populateContract,
+  paymasterAddress: YOUR_CUSTOM_PAYMASTER_ADDRESS,
+  innerInput: customInnerInput
+})
 ```

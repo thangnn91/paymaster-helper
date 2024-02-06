@@ -30,6 +30,16 @@ export async function buildErc20PaymentParams(
     innerInput = abiCoder.encode(["address"], [ethers.constants.AddressZero]);
   }
   let populatedTx = props.populateTransaction;
+  const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+    type: "ApprovalBased",
+    token: paymentToken,
+    minimalAllowance: BigNumber.from(1),
+    innerInput: innerInput || new Uint8Array(),
+  });
+  populatedTx.customData = {
+    gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    prePaymasterParams,
+  };
   let gasLimit = await provider.estimateGas({
     ...populatedTx,
     from,
@@ -58,7 +68,7 @@ export async function buildErc20PaymentParams(
   const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
     type: "ApprovalBased",
     token: paymentToken,
-    minimalAllowance: ethers.BigNumber.from(minAmount),
+    minimalAllowance: ethers.BigNumber.from(minAmount).mul(120).div(100),
     innerInput: innerInput || new Uint8Array(),
   });
 
@@ -96,7 +106,27 @@ export async function buildNftPaymentParams(
   );
 
   let populatedTx = props.populateTransaction;
-
+  if (!paymentToken) {
+    const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+      type: "General",
+      innerInput: innerInput || new Uint8Array(),
+    });
+    populatedTx.customData = {
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+      prePaymasterParams,
+    };
+  } else {
+    const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+      type: "ApprovalBased",
+      token: paymentToken,
+      minimalAllowance: BigNumber.from(1),
+      innerInput: innerInput || new Uint8Array(),
+    });
+    populatedTx.customData = {
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+      prePaymasterParams,
+    };
+  }
   let gasLimit = await provider.estimateGas({
     ...populatedTx,
     from,
@@ -137,7 +167,7 @@ export async function buildNftPaymentParams(
     const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
       type: "ApprovalBased",
       token: paymentToken,
-      minimalAllowance: BigNumber.from(minAmount),
+      minimalAllowance: BigNumber.from(minAmount).mul(120).div(100),
       innerInput: innerInput || new Uint8Array(),
     });
     populatedTx.customData = {
