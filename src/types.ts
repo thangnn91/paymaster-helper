@@ -14,7 +14,7 @@ type IntRange<F extends number, T extends number> = Exclude<
   Enumerate<F>
 >;
 
-export type BufferRange = IntRange<0, 50>;
+export type BufferRange = IntRange<0, 100>;
 export interface BaseProps {
   network: "testnet" | "mainnet";
   paymasterAddress?: string;
