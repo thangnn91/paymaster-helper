@@ -33,7 +33,7 @@ export interface BaseProps {
   paymasterAddress?: string; //custom paymaster address
   populateTransaction: ethers.PopulatedTransaction;
   innerInput?: string; //custom inner input for paymaster
-  gasBufferPercentage?: BufferRange; //gas buffer percentage, default: 25%
+  gasBufferPercentage?: BufferRange; //gas buffer percentage, default: 30% in mainnet
 }
 
 export interface WalletExecuteProps extends BaseProps {
