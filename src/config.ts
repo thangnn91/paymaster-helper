@@ -211,4 +211,4 @@ export const ERC20_ABI = [
   },
 ];
 
-export const DEFAULT_GAS_BUFFER_PERCENTAGE = 30;
+export const DEFAULT_GAS_LIMIT = 2_500_000;

@@ -1,7 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import { Contract, Provider, utils } from "zksync-web3";
 import {
-  DEFAULT_GAS_BUFFER_PERCENTAGE,
+  DEFAULT_GAS_LIMIT,
   ERC20_ABI,
   NFT_ABI,
   PAYMASTER_ADDRESS,
@@ -30,31 +30,34 @@ export async function buildErc20PaymentParams(
     const abiCoder = new ethers.utils.AbiCoder();
     innerInput = abiCoder.encode(["address"], [ethers.constants.AddressZero]);
   }
-  let populatedTx = props.populateTransaction;
+  const populatedTx = props.populateTransaction;
   const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
     type: "ApprovalBased",
     token: paymentToken,
-    minimalAllowance: BigNumber.from(1),
+    minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
     innerInput: innerInput || new Uint8Array(),
   });
   populatedTx.customData = {
     gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-    prePaymasterParams,
+    paymasterParams: prePaymasterParams,
   };
-  let gasLimit = await provider.estimateGas({
-    ...populatedTx,
-    from,
-  });
-
-  gasLimit = gasLimit
-    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
-    .div(100);
+  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
+  try {
+    gasLimit = await provider.estimateGas({
+      ...populatedTx,
+      from,
+    });
+  } catch (error) {
+    console.log("🚀 ~ error estimateGas:", error);
+  }
   const ethFee = gasLimit.mul(gasPrice);
+
   const paymasterContract = new Contract(
     paymasterAddress,
     PAYMASTER_CONTRACT_ABI,
     provider
   );
+
   const [, minAmount] = await paymasterContract.getTokenFee(
     paymentToken,
     ethFee
@@ -71,7 +74,7 @@ export async function buildErc20PaymentParams(
   const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
     type: "ApprovalBased",
     token: paymentToken,
-    minimalAllowance: ethers.BigNumber.from(minAmount).mul(120).div(100),
+    minimalAllowance: ethers.BigNumber.from(minAmount).mul(105).div(100),
     innerInput: innerInput || new Uint8Array(),
   });
 
@@ -108,7 +111,7 @@ export async function buildNftPaymentParams(
     provider
   );
 
-  let populatedTx = props.populateTransaction;
+  const populatedTx = props.populateTransaction;
   if (!paymentToken) {
     const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
       type: "General",
@@ -116,28 +119,30 @@ export async function buildNftPaymentParams(
     });
     populatedTx.customData = {
       gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      prePaymasterParams,
+      paymasterParams: prePaymasterParams,
     };
   } else {
     const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
       type: "ApprovalBased",
       token: paymentToken,
-      minimalAllowance: BigNumber.from(1),
+      minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
       innerInput: innerInput || new Uint8Array(),
     });
     populatedTx.customData = {
       gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      prePaymasterParams,
+      paymasterParams: prePaymasterParams,
     };
   }
-  let gasLimit = await provider.estimateGas({
-    ...populatedTx,
-    from,
-  });
+  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
+  try {
+    gasLimit = await provider.estimateGas({
+      ...populatedTx,
+      from,
+    });
+  } catch (error) {
+    console.log("🚀 ~ error estimateGas:", error);
+  }
 
-  gasLimit = gasLimit
-    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
-    .div(100);
   const ethFee = gasLimit.mul(gasPrice);
   const nftContractAddress = await paymasterContract.nftAsset();
   const nftContract = new Contract(nftContractAddress, NFT_ABI, provider);
@@ -172,7 +177,7 @@ export async function buildNftPaymentParams(
     const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
       type: "ApprovalBased",
       token: paymentToken,
-      minimalAllowance: BigNumber.from(minAmount).mul(120).div(100),
+      minimalAllowance: BigNumber.from(minAmount).mul(105).div(100),
       innerInput: innerInput || new Uint8Array(),
     });
     populatedTx.customData = {
@@ -223,15 +228,26 @@ export async function getErc20MustBePaid(
     const abiCoder = new ethers.utils.AbiCoder();
     innerInput = abiCoder.encode(["uint8"], [nftType]);
   }
-
-  let gasLimit = await provider.estimateGas({
-    ...props.populateTransaction,
-    from,
+  const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+    type: "ApprovalBased",
+    token: paymentToken,
+    minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
+    innerInput: innerInput || new Uint8Array(),
   });
-
-  gasLimit = gasLimit
-    .mul(100 + (props.gasBufferPercentage || DEFAULT_GAS_BUFFER_PERCENTAGE))
-    .div(100);
+  const populatedTx = props.populateTransaction;
+  populatedTx.customData = {
+    gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    paymasterParams: prePaymasterParams,
+  };
+  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
+  try {
+    gasLimit = await provider.estimateGas({
+      ...populatedTx,
+      from,
+    });
+  } catch (error) {
+    console.log("🚀 ~ error estimateGas:", error);
+  }
   const ethFee = gasLimit.mul(gasPrice);
   const [, minAmount] = await paymasterContract.getTokenFee(
     paymentToken,

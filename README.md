@@ -27,13 +27,12 @@ yarn add @holdstation/paymaster-helper
 **Types**
 
 ```
-export type BufferRange = IntRange<0, 100>;
 export interface BaseProps {
   network: "testnet" | "mainnet";
   paymasterAddress?: string; //custom paymaster address
   populateTransaction: ethers.PopulatedTransaction;
   innerInput?: string; //custom inner input for paymaster
-  gasBufferPercentage?: BufferRange; //gas buffer percentage, default: 30% in mainnet
+  defaultGasLimit?: number; //default gas limit in case gas estimate for paymaster fails, if no param is passed, default is 2_500_000
 }
 
 export interface WalletExecuteProps extends BaseProps {
