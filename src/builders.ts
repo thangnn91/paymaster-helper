@@ -31,6 +31,13 @@ export async function buildErc20PaymentParams(
     innerInput = abiCoder.encode(["address"], [ethers.constants.AddressZero]);
   }
   const populatedTx = props.populateTransaction;
+
+  //gaslimit without paymaster validation
+  const preGasLimit = await provider.estimateGas({
+    ...populatedTx,
+    from,
+  });
+
   const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
     type: "ApprovalBased",
     token: paymentToken,
@@ -41,7 +48,15 @@ export async function buildErc20PaymentParams(
     gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
     paymasterParams: prePaymasterParams,
   };
-  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
+
+  const defaultGaslimit = BigNumber.from(
+    props.defaultGasLimit || DEFAULT_GAS_LIMIT
+  );
+
+  let gasLimit = preGasLimit.gt(defaultGaslimit)
+    ? preGasLimit.mul(200).div(100)
+    : defaultGaslimit;
+
   try {
     gasLimit = await provider.estimateGas({
       ...populatedTx,
@@ -133,6 +148,7 @@ export async function buildNftPaymentParams(
       paymasterParams: prePaymasterParams,
     };
   }
+
   let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
   try {
     gasLimit = await provider.estimateGas({
