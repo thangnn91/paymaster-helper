@@ -54,7 +54,7 @@ export async function buildErc20PaymentParams(
   );
 
   let gasLimit = preGasLimit.gt(defaultGaslimit)
-    ? preGasLimit.mul(200).div(100)
+    ? preGasLimit.mul(150).div(100)
     : defaultGaslimit;
 
   try {
