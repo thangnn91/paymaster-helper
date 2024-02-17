@@ -139,3 +139,21 @@ await SignerPaymaster.paymasterExecute({
   innerInput: customInnerInput
 })
 ```
+
+Partners, please use the paymaster we built specifically for you for your convenience in reporting
+
+```
+//all our partners should use the paymaster
+const CUSTOM_PAYMASTER_ADDRESS = '0x069246dFEcb95A6409180b52C071003537B23c27';
+
+//Each participant will receive one partner code.
+const partnerCode = '0x0000000000000000000000000000000000000000000000000000000000000001';
+const tx = await SignerPaymaster.paymasterExecute({
+    network: 'mainnet',
+    populateTransaction: populateContract,
+    signer: signer,
+    paymentToken: PAYMENT_TOKEN,
+    paymasterAddress: CUSTOM_PAYMASTER_ADDRESS,
+    innerInput: partnerCode
+  })
+```

@@ -211,4 +211,4 @@ export const ERC20_ABI = [
   },
 ];
 
-export const DEFAULT_GAS_LIMIT = 1_200_000;
+export const DEFAULT_GAS_LIMIT = 1_500_000;

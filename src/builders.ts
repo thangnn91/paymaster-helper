@@ -32,12 +32,6 @@ export async function buildErc20PaymentParams(
   }
   const populatedTx = props.populateTransaction;
 
-  //gaslimit without paymaster validation
-  const preGasLimit = await provider.estimateGas({
-    ...populatedTx,
-    from,
-  });
-
   const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
     type: "ApprovalBased",
     token: paymentToken,
@@ -53,9 +47,7 @@ export async function buildErc20PaymentParams(
     props.defaultGasLimit || DEFAULT_GAS_LIMIT
   );
 
-  let gasLimit = preGasLimit.gt(defaultGaslimit)
-    ? preGasLimit.mul(150).div(100)
-    : defaultGaslimit;
+  let gasLimit = defaultGaslimit;
 
   try {
     gasLimit = await provider.estimateGas({
@@ -63,7 +55,16 @@ export async function buildErc20PaymentParams(
       from,
     });
   } catch (error) {
-    console.log("🚀 ~ error estimateGas:", error);
+    console.log("🚀 ~ error estimateGas with custom data:", error);
+    //gaslimit without paymaster validation
+    delete populatedTx.customData;
+    const preGasLimit = await provider.estimateGas({
+      ...populatedTx,
+      from,
+    });
+    gasLimit = preGasLimit.mul(150).div(100).gt(defaultGaslimit)
+      ? preGasLimit.mul(150).div(100)
+      : defaultGaslimit;
   }
   const ethFee = gasLimit.mul(gasPrice);
 
