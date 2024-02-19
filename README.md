@@ -146,8 +146,11 @@ Partners, please use the paymaster we built specifically for you for your conven
 //all our partners should use the paymaster
 const CUSTOM_PAYMASTER_ADDRESS = '0x069246dFEcb95A6409180b52C071003537B23c27';
 
-//Each participant will receive one partner code.
-const partnerCode = '0x0000000000000000000000000000000000000000000000000000000000000001';
+Each partner will need to provide us with a partner code encoded according to your project name or company name this code is constant.
+Eg: SYNCSWAP, UNISWAP
+
+const projectName = 'SYNCSWAP';
+const partnerCode = ethers.utils.formatBytes32String(projectName);
 const tx = await SignerPaymaster.paymasterExecute({
     network: 'mainnet',
     populateTransaction: populateContract,
