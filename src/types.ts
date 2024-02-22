@@ -35,6 +35,14 @@ export interface SignerExecuteProps extends BaseProps {
   nftType?: 0 | 1 | 2 | 3;
 }
 
+export interface AAWalletExecuteProps extends WalletExecuteProps {
+  aaAddress: string;
+}
+
+export interface AASignerExecuteProps extends SignerExecuteProps {
+  aaAddress: string;
+}
+
 export type BuilderOutput = {
   populatedTx: ethers.PopulatedTransaction;
   gasLimit: BigNumber;

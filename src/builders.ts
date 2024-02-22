@@ -12,12 +12,13 @@ import {
 } from "./config";
 import { BaseProps, BuilderOutput, UserNftOutput } from "./types";
 import { assert } from "./utils";
-export async function buildErc20PaymentParams(
+
+export async function estimateGasErc20Payment(
   props: BaseProps,
   provider: Provider,
   from: string,
   paymentToken: string
-): Promise<BuilderOutput> {
+): Promise<Omit<BuilderOutput, "populatedTx">> {
   const paymasterAddress =
     props.paymasterAddress || PAYMASTER_ADDRESS[props.network];
 
@@ -43,11 +44,11 @@ export async function buildErc20PaymentParams(
     paymasterParams: prePaymasterParams,
   };
 
-  const defaultGaslimit = BigNumber.from(
+  const defaultGasLimit = BigNumber.from(
     props.defaultGasLimit || DEFAULT_GAS_LIMIT
   );
 
-  let gasLimit = defaultGaslimit;
+  let gasLimit = defaultGasLimit;
 
   try {
     gasLimit = await provider.estimateGas({
@@ -62,10 +63,38 @@ export async function buildErc20PaymentParams(
       ...populatedTx,
       from,
     });
-    gasLimit = preGasLimit.mul(150).div(100).gt(defaultGaslimit)
+    gasLimit = preGasLimit.mul(150).div(100).gt(defaultGasLimit)
       ? preGasLimit.mul(150).div(100)
-      : defaultGaslimit;
+      : defaultGasLimit;
   }
+  return { gasLimit, gasPrice };
+}
+
+export async function buildErc20PaymentParams(
+  props: BaseProps,
+  provider: Provider,
+  from: string,
+  paymentToken: string
+): Promise<BuilderOutput> {
+  const paymasterAddress =
+    props.paymasterAddress || PAYMASTER_ADDRESS[props.network];
+
+  let innerInput: string | undefined = undefined;
+  if (props.innerInput) {
+    innerInput = props.innerInput;
+  } else if (!props.paymasterAddress) {
+    const abiCoder = new ethers.utils.AbiCoder();
+    innerInput = abiCoder.encode(["address"], [ethers.constants.AddressZero]);
+  }
+  const populatedTx = props.populateTransaction;
+
+  const { gasLimit, gasPrice } = await estimateGasErc20Payment(
+    props,
+    provider,
+    from,
+    paymentToken
+  );
+
   const ethFee = gasLimit.mul(gasPrice);
 
   const paymasterContract = new Contract(
@@ -74,7 +103,7 @@ export async function buildErc20PaymentParams(
     provider
   );
 
-  const [, minAmount] = await paymasterContract.getTokenFee(
+  const [afterDiscount, minAmount] = await paymasterContract.getTokenFee(
     paymentToken,
     ethFee
   );
@@ -83,8 +112,8 @@ export async function buildErc20PaymentParams(
   const userBalance = await erc20Contract.balanceOf(from);
 
   assert(
-    BigNumber.from(userBalance).gte(BigNumber.from(minAmount)),
-    "insufficient erc20 balance "
+    BigNumber.from(userBalance).gte(BigNumber.from(afterDiscount)),
+    "insufficient erc20 balance"
   );
 
   const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
@@ -102,6 +131,51 @@ export async function buildErc20PaymentParams(
   return { populatedTx, gasLimit, gasPrice };
 }
 
+export async function buildGeneralPaymentParams(
+  props: BaseProps,
+  provider: Provider,
+  from: string
+): Promise<BuilderOutput> {
+  const paymasterAddress =
+    props.paymasterAddress || PAYMASTER_ADDRESS[props.network];
+
+  const gasPrice = await provider.getGasPrice();
+
+  let innerInput: string | undefined = undefined;
+  if (props.innerInput) {
+    innerInput = props.innerInput;
+  } else if (!props.paymasterAddress) {
+    const abiCoder = new ethers.utils.AbiCoder();
+    innerInput = abiCoder.encode(["address"], [ethers.constants.AddressZero]);
+  }
+  const populatedTx = props.populateTransaction;
+
+  const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+    type: "General",
+    innerInput: innerInput || new Uint8Array(),
+  });
+  populatedTx.customData = {
+    gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    paymasterParams: prePaymasterParams,
+  };
+
+  const gasLimit = await provider.estimateGas({
+    ...populatedTx,
+    from,
+  });
+
+  const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
+    type: "General",
+    innerInput: innerInput || new Uint8Array(),
+  });
+
+  populatedTx.customData = {
+    gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+    paymasterParams,
+  };
+  return { populatedTx, gasLimit, gasPrice };
+}
+
 export async function buildNftPaymentParams(
   props: BaseProps,
   provider: Provider,
@@ -113,88 +187,30 @@ export async function buildNftPaymentParams(
     props.paymasterAddress || PAYMASTER_NFT_ADDRESS[props.network];
   const gasPrice = await provider.getGasPrice();
 
-  let innerInput: string | undefined = undefined;
-  if (props.innerInput) {
-    innerInput = props.innerInput;
-  } else if (!props.paymasterAddress) {
-    const abiCoder = new ethers.utils.AbiCoder();
-    innerInput = abiCoder.encode(["uint8"], [nftType]);
-  }
-
-  const paymasterContract = new Contract(
-    paymasterAddress,
-    PAYMASTER_NFT_CONTRACT_ABI,
-    provider
-  );
-
   const populatedTx = props.populateTransaction;
-  if (!paymentToken) {
-    const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
-      type: "General",
-      innerInput: innerInput || new Uint8Array(),
-    });
-    populatedTx.customData = {
-      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      paymasterParams: prePaymasterParams,
-    };
-  } else {
-    const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
-      type: "ApprovalBased",
-      token: paymentToken,
-      minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
-      innerInput: innerInput || new Uint8Array(),
-    });
-    populatedTx.customData = {
-      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      paymasterParams: prePaymasterParams,
-    };
-  }
+  const { gasLimit, erc20Fee, afterDiscountFee, innerInput } =
+    await getErc20MustBePaid(props, from, nftType, paymentToken);
 
-  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
-  try {
-    gasLimit = await provider.estimateGas({
-      ...populatedTx,
-      from,
-    });
-  } catch (error) {
-    console.log("🚀 ~ error estimateGas:", error);
-  }
-
-  const ethFee = gasLimit.mul(gasPrice);
-  const nftContractAddress = await paymasterContract.nftAsset();
-  const nftContract = new Contract(nftContractAddress, NFT_ABI, provider);
-  const maxFeeSponsored = await nftContract.maxSponsorGas(nftType);
-
-  if (!paymentToken && BigNumber.from(maxFeeSponsored).lt(ethFee)) {
-    throw new Error("Exceed maximum gas fee is sponsored");
-  }
-
-  if (!paymentToken) {
-    const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
-      type: "General",
-      innerInput: innerInput || new Uint8Array(),
-    });
-    populatedTx.customData = {
-      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
-      paymasterParams,
-    };
-  } else {
-    const [, minAmount] = await paymasterContract.getTokenFee(
-      paymentToken,
-      nftType,
-      ethFee
-    );
+  if (erc20Fee.gt(0)) {
     const erc20Contract = new Contract(paymentToken, ERC20_ABI, provider);
     const userBalance = await erc20Contract.balanceOf(from);
     assert(
-      BigNumber.from(userBalance).gte(BigNumber.from(minAmount)),
+      BigNumber.from(userBalance).gte(afterDiscountFee),
       "insufficient erc20 balance "
     );
-
     const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
       type: "ApprovalBased",
       token: paymentToken,
-      minimalAllowance: BigNumber.from(minAmount).mul(105).div(100),
+      minimalAllowance: BigNumber.from(erc20Fee).mul(105).div(100),
+      innerInput: innerInput || new Uint8Array(),
+    });
+    populatedTx.customData = {
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+      paymasterParams,
+    };
+  } else {
+    const paymasterParams = utils.getPaymasterParams(paymasterAddress, {
+      type: "General",
       innerInput: innerInput || new Uint8Array(),
     });
     populatedTx.customData = {
@@ -202,7 +218,6 @@ export async function buildNftPaymentParams(
       paymasterParams,
     };
   }
-
   return { populatedTx, gasLimit, gasPrice };
 }
 
@@ -228,7 +243,13 @@ export async function getErc20MustBePaid(
   from: string,
   nftType: 0 | 1 | 2 | 3,
   paymentToken: string
-): Promise<BigNumber> {
+): Promise<{
+  gasLimit: BigNumber;
+  ethFee: BigNumber;
+  erc20Fee: BigNumber;
+  afterDiscountFee: BigNumber;
+  innerInput: string | undefined;
+}> {
   const provider = new Provider(RPC[props.network]);
   const paymasterAddress = PAYMASTER_NFT_ADDRESS[props.network];
   const paymasterContract = new Contract(
@@ -245,33 +266,93 @@ export async function getErc20MustBePaid(
     const abiCoder = new ethers.utils.AbiCoder();
     innerInput = abiCoder.encode(["uint8"], [nftType]);
   }
+
+  const estimateApprovalBased = async (gasLimit: BigNumber) => {
+    if (!paymentToken) {
+      throw new Error("Payment token is required");
+    }
+    const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
+      type: "ApprovalBased",
+      token: paymentToken,
+      minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
+      innerInput: innerInput || new Uint8Array(),
+    });
+    const populatedTx = props.populateTransaction;
+    populatedTx.customData = {
+      gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
+      paymasterParams: prePaymasterParams,
+    };
+
+    try {
+      gasLimit = await provider.estimateGas({
+        ...populatedTx,
+        from,
+      });
+    } catch (error) {
+      console.log("🚀 ~ error estimateGas:", error);
+      delete populatedTx.customData;
+      const preGasLimit = await provider.estimateGas({
+        ...populatedTx,
+        from,
+      });
+      gasLimit = preGasLimit.mul(150).div(100).gt(defaultGasLimit)
+        ? preGasLimit.mul(150).div(100)
+        : defaultGasLimit;
+    }
+    return gasLimit;
+  };
+
   const prePaymasterParams = utils.getPaymasterParams(paymasterAddress, {
-    type: "ApprovalBased",
-    token: paymentToken,
-    minimalAllowance: BigNumber.from(ethers.constants.MaxUint256),
+    type: "General",
     innerInput: innerInput || new Uint8Array(),
   });
+
   const populatedTx = props.populateTransaction;
+
   populatedTx.customData = {
     gasPerPubdata: utils.DEFAULT_GAS_PER_PUBDATA_LIMIT,
     paymasterParams: prePaymasterParams,
   };
-  let gasLimit = BigNumber.from(props.defaultGasLimit || DEFAULT_GAS_LIMIT);
+  const defaultGasLimit = BigNumber.from(
+    props.defaultGasLimit || DEFAULT_GAS_LIMIT
+  );
+
+  let gasLimit = defaultGasLimit;
+  let isGeneral = true;
   try {
     gasLimit = await provider.estimateGas({
       ...populatedTx,
       from,
     });
   } catch (error) {
-    console.log("🚀 ~ error estimateGas:", error);
+    if (JSON.stringify(error).includes("EXCEED_GAS_FEE")) {
+      isGeneral = false;
+      gasLimit = await estimateApprovalBased(gasLimit);
+    } else {
+      throw error;
+    }
   }
+
   const ethFee = gasLimit.mul(gasPrice);
-  const [, minAmount] = await paymasterContract.getTokenFee(
-    paymentToken,
-    nftType,
-    ethFee
-  );
-  return BigNumber.from(minAmount);
+  let minAmount = BigNumber.from(0);
+  let afterDiscount = BigNumber.from(0);
+  if (!isGeneral) {
+    const [afterDiscountFee, erc20Fee] = await paymasterContract.getTokenFee(
+      paymentToken,
+      nftType,
+      ethFee
+    );
+    minAmount = BigNumber.from(erc20Fee);
+    afterDiscount = afterDiscountFee;
+  }
+
+  return {
+    gasLimit,
+    ethFee,
+    erc20Fee: BigNumber.from(minAmount),
+    afterDiscountFee: BigNumber.from(afterDiscount),
+    innerInput,
+  };
 }
 
 export async function getAllNfts(

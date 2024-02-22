@@ -32,7 +32,7 @@ export interface BaseProps {
   paymasterAddress?: string; //custom paymaster address
   populateTransaction: ethers.PopulatedTransaction;
   innerInput?: string; //custom inner input for paymaster
-  defaultGasLimit?: number; //default gas limit in case gas estimate for paymaster fails, if no param is passed, default is 2_500_000
+  defaultGasLimit?: number; //default gas limit in case gas estimate for paymaster fails, if no param is passed, default is 1_500_000
 }
 
 export interface WalletExecuteProps extends BaseProps {
