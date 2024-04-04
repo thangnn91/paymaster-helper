@@ -1,18 +1,17 @@
 export const RPC = {
-  testnet: "https://zksync2-testnet.zksync.dev",
+  testnet: "https://sepolia.era.zksync.dev",
   mainnet: "https://mainnet.era.zksync.io",
 };
 
 export const PAYMASTER_ADDRESS = {
-  testnet: "0xB92ba3fA75554dbC6425e28A3C345A3070C2d566",
+  testnet: "0xE151D85eA1Bc32Fb4863a484F590983F11bd688A",
 
   mainnet: "0x4081e092F948Cffd946a75e1F556c13c372304bc",
 };
 
 export const PAYMASTER_NFT_ADDRESS = {
-  testnet: "0x09dF8c177002ceBb7C585C2eFf497BE0B779c630",
-
-  mainnet: "0x0000000000000000000000000000000000000000",
+  testnet: "0xD5b27C040Eb91516cd7467Aab337Ae0119cef52B",
+  mainnet: "0x09004cd2B2397C1E1404FB2a364AB1147Bd08bcc",
 };
 
 export const PAYMASTER_CONTRACT_ABI = [

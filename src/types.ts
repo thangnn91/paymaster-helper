@@ -15,24 +15,27 @@ import { Signer } from "zksync-web3";
 // >;
 
 // export type GasLimitRange = IntRange<0, 100>;
+
+export type NftType = 0 | 1 | 2 | 3;
 export interface BaseProps {
   network: "testnet" | "mainnet";
   paymasterAddress?: string;
   populateTransaction: ethers.PopulatedTransaction;
   innerInput?: string;
+  minimumGasLimit?: number;
   defaultGasLimit?: number;
 }
 
 export interface WalletExecuteProps extends BaseProps {
   signer: string | Wallet;
   paymentToken?: string;
-  nftType?: 0 | 1 | 2 | 3;
+  nftType?: NftType;
 }
 
 export interface SignerExecuteProps extends BaseProps {
   signer?: Signer;
   paymentToken?: string;
-  nftType?: 0 | 1 | 2 | 3;
+  nftType?: NftType;
 }
 
 export interface AAWalletExecuteProps extends WalletExecuteProps {
@@ -50,12 +53,12 @@ export type BuilderOutput = {
 };
 
 export type UserNftOutput = [
-  nftType: BigNumber,
+  id: BigNumber,
   balance: BigNumber,
   uri: string,
   maxSponsor: BigNumber
 ] & {
-  nftType: BigNumber;
+  id: BigNumber;
   balance: BigNumber;
   uri: string;
   maxSponsor: BigNumber;
