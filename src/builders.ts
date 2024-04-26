@@ -68,7 +68,12 @@ export async function estimateGasErc20Payment(
       ? preGasLimit.mul(150).div(100)
       : defaultGasLimit;
   }
-  return { gasLimit, gasPrice };
+  return {
+    gasLimit: props.bufferPercentage
+      ? gasLimit.mul(100 + props.bufferPercentage).div(100)
+      : gasLimit,
+    gasPrice,
+  };
 }
 
 export async function buildErc20PaymentParams(

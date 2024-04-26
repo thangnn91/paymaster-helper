@@ -24,6 +24,7 @@ export interface BaseProps {
   innerInput?: string;
   minimumGasLimit?: number;
   defaultGasLimit?: number;
+  bufferPercentage?: number;
 }
 
 export interface WalletExecuteProps extends BaseProps {
