@@ -1,6 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { Wallet } from "zksync-web3";
-import { Signer } from "zksync-web3";
+import { Wallet, Signer } from "zksync-ethers";
 
 // type Enumerate<
 //   N extends number,
@@ -16,7 +15,15 @@ import { Signer } from "zksync-web3";
 
 // export type GasLimitRange = IntRange<0, 100>;
 
-export type NftType = 0 | 1 | 2 | 3;
+export type EthereumAddress = `0x${string}`;
+
+export enum UserTypes {
+  Signer,
+  Wallet,
+  PrivateKey,
+  Browser,
+}
+
 export interface BaseProps {
   network: "testnet" | "mainnet";
   paymasterAddress?: string;
@@ -27,40 +34,17 @@ export interface BaseProps {
   bufferPercentage?: number;
 }
 
-export interface WalletExecuteProps extends BaseProps {
-  signer: string | Wallet;
-  paymentToken?: string;
-  nftType?: NftType;
+export interface ExecuteProps extends BaseProps {
+  signer?: string | Wallet | Signer | undefined;
+  paymentToken?: EthereumAddress;
 }
 
-export interface SignerExecuteProps extends BaseProps {
-  signer?: Signer;
-  paymentToken?: string;
-  nftType?: NftType;
-}
-
-export interface AAWalletExecuteProps extends WalletExecuteProps {
-  aaAddress: string;
-}
-
-export interface AASignerExecuteProps extends SignerExecuteProps {
-  aaAddress: string;
+export interface AAExecuteProps extends ExecuteProps {
+  aaAddress: EthereumAddress;
 }
 
 export type BuilderOutput = {
   populatedTx: ethers.PopulatedTransaction;
   gasLimit: BigNumber;
   gasPrice: BigNumber;
-};
-
-export type UserNftOutput = [
-  id: BigNumber,
-  balance: BigNumber,
-  uri: string,
-  maxSponsor: BigNumber
-] & {
-  id: BigNumber;
-  balance: BigNumber;
-  uri: string;
-  maxSponsor: BigNumber;
 };
