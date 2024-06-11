@@ -110,6 +110,9 @@ export const paymasterExecuteAA = async (
   if (!props.paymentToken) {
     throw new Error("Payment token is required");
   }
+  if (!props.aaAddress) {
+    throw new Error("AA address is required");
+  }
   const abiCoder = new utils.AbiCoder();
   const internalInnerInput =
     props.innerInput || abiCoder.encode(["address"], [constants.AddressZero]);
@@ -167,6 +170,9 @@ export const paymasterExecuteAA = async (
 export const paymasterSponsorAA = async (
   props: AAExecuteProps
 ): Promise<types.TransactionResponse> => {
+  if (!props.aaAddress) {
+    throw new Error("AA address is required");
+  }
   const abiCoder = new utils.AbiCoder();
   const internalInnerInput =
     props.innerInput || abiCoder.encode(["address"], [constants.AddressZero]);
