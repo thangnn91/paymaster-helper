@@ -133,7 +133,7 @@ export const paymasterExecuteAA = async (
       props.paymentToken,
       signer.provider,
       signer,
-      UserTypes.Wallet,
+      UserTypes.Signer,
       props.aaAddress
     );
   }
@@ -149,7 +149,7 @@ export const paymasterExecuteAA = async (
       props.paymentToken,
       signer.provider,
       signer,
-      UserTypes.Wallet,
+      UserTypes.Signer,
       props.aaAddress
     );
   }
